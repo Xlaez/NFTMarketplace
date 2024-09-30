@@ -4,7 +4,7 @@ import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/Counters.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 
-contract NFTmarketPlace is ReentrancyGuard{
+contract NFTmarketPlace is ReentrancyGuard {
     using Counters for Counters.Counter;
     Counters.Counter private _itemIds;
     Counters.Counter private _itemsSold;
@@ -25,18 +25,18 @@ contract NFTmarketPlace is ReentrancyGuard{
         bool sold;
     }
 
-    mapping(unit256 => MarketItem) public marketItems;
+    mapping(uint256 => MarketItem) public marketItems;
 
     // Events
     event MarketItemCreated(
-        unit256 indexed itemId,
+        uint256 indexed itemId,
         address indexed nftContract,
-        unit256 indexed tokenId,
+        uint256 indexed tokenId,
         address seller,
         address owner,
         uint256 price,
-        bool sold,
-    )
+        bool sold
+    );
 
     event MarketItemSold(
         uint256 indexed itemId,
@@ -46,28 +46,28 @@ contract NFTmarketPlace is ReentrancyGuard{
         address owner,
         uint256 price,
         bool sold
-    )
+    );
 
-    constructor(){
+    constructor() {
         owner = payable(msg.sender);
     }
 
-    modifier onlyOwner{
-        require(msg.sender === owner, "Only owner can call this function");
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can call this function");
         _;
     }
 
-    function ListItemForSale (
+    function listItemForSale(
         address _nftcontract,
         uint256 _tokenId,
-        uint256 _price,
+        uint256 _price
     ) public payable nonReentrant {
-        require(_price >0, "amount must be greater than zero");
+        require(_price > 0, "amount must be greater than zero");
         require(msg.value == listingPrice, "not listing price");
 
         _itemIds.increment();
-        unit256 itemIds = _itemIds.current();
-        MarketItem memory _m = marketItems[itemids];
+        uint256 itemIds = _itemIds.current();
+        MarketItem memory _m = marketItems[itemIds];
 
         _m.itemId = itemIds;
         _m.nftContract = _nftcontract;
@@ -76,7 +76,7 @@ contract NFTmarketPlace is ReentrancyGuard{
         _m.owner = payable(address(0));
         _m.price = _price;
         _m.sold = false;
-        marketItems[itemIds]  = _m;
+        marketItems[itemIds] = _m;
 
         IERC721(_nftcontract).transferFrom(msg.sender, address(this), _tokenId);
 
@@ -87,11 +87,11 @@ contract NFTmarketPlace is ReentrancyGuard{
             msg.sender,
             address(0),
             _price,
-            false,
+            false
         );
     }
 
-    function buyAsset(uint256 itemId) public payable nonReentrant{
+    function buyAsset(uint256 itemId) public payable nonReentrant {
         uint256 price = marketItems[itemId].price;
         uint256 tokenIds = marketItems[itemId].tokenId;
         address seller = marketItems[itemId].seller;
@@ -117,19 +117,20 @@ contract NFTmarketPlace is ReentrancyGuard{
             seller,
             owner,
             price,
-            true,
+            true
         );
     }
 
-    function fetchMarketItems() public view returns (MarketItem[] memory){
+    function fetchMarketItems() public view returns (MarketItem[] memory) {
         uint256 itemCount = _itemIds.current();
-        uint256 unsoldItemsCount = (_itemIds.current()) - (_itemsSold.current());
+        uint256 unsoldItemsCount = (_itemIds.current()) -
+            (_itemsSold.current());
         uint256 currentIndex = 0;
         MarketItem[] memory items = new MarketItem[](unsoldItemsCount);
 
-        for(uint256 i = 0; i < itemCount; i++){
-            if(marketItems[i + 1].owner == address(0)){
-                 uint256 currentId = marketItems[i + 1].itemId;
+        for (uint256 i = 0; i < itemCount; i++) {
+            if (marketItems[i + 1].owner == address(0)) {
+                uint256 currentId = marketItems[i + 1].itemId;
                 MarketItem storage currentItem = marketItems[currentId];
                 items[currentIndex] = currentItem;
                 currentIndex += 1;
@@ -138,21 +139,21 @@ contract NFTmarketPlace is ReentrancyGuard{
         return items;
     }
 
-    function fetchUserNfts() public view returns (MarketItem[] memory){
+    function fetchUserNfts() public view returns (MarketItem[] memory) {
         uint256 totalItemCount = _itemIds.current();
         uint256 itemCount = 0;
         uint256 currentIndex = 0;
 
-        for(uint256 i =0; i < totalItemCount; i++){
-            if(marketItems[ i + 1].owner == msg.sender){
-                itemCount +=1;
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            if (marketItems[i + 1].owner == msg.sender) {
+                itemCount += 1;
             }
         }
         MarketItem[] memory items = new MarketItem[](itemCount);
 
-        for(uint256 i = 0; i < totalItemCount; i++){
-            if(marketItems[i+1].owner === msg.sender){
-                unit256 currentId = marketItems[i+1].itemId;
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            if (marketItems[i + 1].owner == msg.sender) {
+                uint256 currentId = marketItems[i + 1].itemId;
                 MarketItem storage currentItem = marketItems[currentId];
                 items[currentIndex] = currentItem;
                 currentIndex += 1;
@@ -161,7 +162,7 @@ contract NFTmarketPlace is ReentrancyGuard{
         return items;
     }
 
-    function fetchItemListed() public view returns (MarketItem[] memory){
+    function fetchItemListed() public view returns (MarketItem[] memory) {
         uint256 totalItemCount = _itemIds.current();
         uint256 itemCount = 0;
         uint256 currentIndex = 0;
@@ -184,7 +185,7 @@ contract NFTmarketPlace is ReentrancyGuard{
         return items;
     }
 
-    function withdrawFee() external onlyOwner returns(bool success){
+    function withdrawFee() external onlyOwner returns (bool success) {
         (success, ) = payable(owner).call{value: address(this).balance}("");
     }
 }
