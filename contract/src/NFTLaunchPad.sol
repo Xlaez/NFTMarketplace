@@ -45,7 +45,7 @@ contract LaunchPadFactory {
 
     function removeAdmin(address _address) external onlyOwner {
         require(_address != address(0), "Can't whitelist address zero");
-        Admins[address] = false;
+        Admins[_address] = false;
     }
 
     function setAdmin(address _address) external onlyOwner {
